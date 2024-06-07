@@ -86,7 +86,6 @@ contract AtlantaPayments is Ownable {
             _name,
             _duration
         );
-        console.log("Getting pricing");
         registerValue = calculatePrice(priceOracle, 110); // 110% of the rent price
         paymentValue = calculatePrice(priceOracle, 115); // 115% of the rent price
     }
@@ -103,30 +102,6 @@ contract AtlantaPayments is Ownable {
         return totalPrice.mul(percent).div(100);
     }
 
-    function revertMessage(bytes memory _data) internal pure returns (string memory) {
-        if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("CommitmentTooNew"))) {
-            return "Commitment Too New";
-        } else if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("CommitmentTooOld"))) {
-            return "Commitment Too Old";
-        } else if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("NameNotAvailable"))) {
-            return "Name not available";
-        } else if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("ResolverRequiredWhenDataSupplied"))) {
-            return "ResolverRequiredWhenDataSupplied";
-        } else if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("UnexpiredCommitmentExists"))) {
-            return "UnexpiredCommitmentExists";
-        } else if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("InsufficientValue"))) {
-            return "InsufficientValue";
-        } else if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("Unauthorised"))) {
-            return "Unauthorised";
-        } else if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("MaxCommitmentAgeTooLow"))) {
-            return "MaxCommitmentAgeTooLow";
-        } else if (keccak256(abi.encodePacked(_data)) == keccak256(abi.encodePacked("MaxCommitmentAgeTooHigh"))) {
-            return "MaxCommitmentAgeTooHigh";
-        } else {
-            return "No error";
-        }
-    }
-
     function registerName(
         string calldata _name,
         address _owner,
@@ -141,66 +116,28 @@ contract AtlantaPayments is Ownable {
             _name,
             _duration
         );
-        console.log("Checking payment value");
         require(
             msg.value >= paymentValue,
             "The value must be greater than the payment value"
         );
-        console.log("checking balance value");
         require(
             address(this).balance >= registerValue,
             "The balance must be greater than the register value"
         );
 
-        console.log("Register name");
-
-        (bool success, bytes memory result ) = address(registrarController).call{
-            value: registerValue
-        }(
-            abi.encodeWithSignature(
-                "register(string,address,uint256,bytes32,address,bytes[],bool,uint16)",
-                _name,
-                _owner,
-                _duration,
-                _secret,
-                _resolver,
-                _data,
-                _reverseRecord,
-                _ownerControlledFuses
-            )
+        registrarController.register{value: registerValue}(
+            _name,
+            _owner,
+            _duration,
+            _secret,
+            _resolver,
+            _data,
+            _reverseRecord,
+            _ownerControlledFuses
         );
-        console.log("Register success? ");
-        console.logBool(success);
-        console.log(revertMessage(result));
-        require(success, string(abi.encodePacked("Failed to register in contract A: ", revertMessage(result))));
-        // try
-        //     registrarController.register{value: registerValue}(
-        //         _name,
-        //         _owner,
-        //         _duration,
-        //         _secret,
-        //         _resolver,
-        //         _data,
-        //         _reverseRecord,
-        //         _ownerControlledFuses
-        //     )
-        // {
-        //     console.log("Register successfully");
-        // } catch Error(string memory reason) {
-        //     console.log(reason);
-        // } catch (bytes memory err) {
-        //     console.log(abi.decode(err, (string)));
-        //     console.logBytes(err);
-        //     console.log(string(err));
-        // }
-        console.log("Checking if value than greater paymentValue");
+        
         if (msg.value > paymentValue) {
-            console.log("Refunds");
             payable(msg.sender).transfer(msg.value - paymentValue);
-        } else if (msg.value == paymentValue) {
-            console.log("Sama");
-        } else {
-            console.log("Tidak sama");
         }
         emit NameRegistered(
             _name,
