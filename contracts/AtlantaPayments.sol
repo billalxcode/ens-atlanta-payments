@@ -36,10 +36,10 @@ contract AtlantaPayments is Ownable {
         uint256 timestamp
     );
 
-    constructor(IETHRegistrarController _registrarAddress) Ownable(msg.sender) {
+    constructor(IETHRegistrarController _registrarAddress, uint256 _registerFee) Ownable(msg.sender) {
         registrarController = _registrarAddress;
 
-        baseRegisterFee = 5;
+        baseRegisterFee = _registerFee;
     }
 
     receive() external payable {}
