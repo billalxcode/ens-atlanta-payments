@@ -13,8 +13,8 @@ contract AtlantaPayments is Ownable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    IETHRegistrarController registrarController;
-    uint256 private baseRegisterFee;
+    IETHRegistrarController public registrarController;
+    uint256 public baseRegisterFee;
     struct PricingWithFee {
         uint256 payment;
         uint256 register;
@@ -43,6 +43,15 @@ contract AtlantaPayments is Ownable {
     }
 
     receive() external payable {}
+    fallback() external payable{}
+
+    function setBaseRegisterFee(uint256 percent) public onlyOwner {
+        baseRegisterFee = percent;
+    }
+
+    function setRegistrarController(IETHRegistrarController registrar) public onlyOwner {
+        registrarController = registrar;
+    }
 
     function rentPrice(
         string memory name,
